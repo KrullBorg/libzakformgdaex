@@ -20,7 +20,7 @@
 	#include <config.h>
 #endif
 
-#include <libzakform/form.h>
+#include <libzakform/libzakform.h>
 
 #include "form.h"
 
