@@ -16,11 +16,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef __LIBZAKFORMGDAEX_H__
-#define __LIBZAKFORMGDAEX_H__
+#ifndef __ZAK_FORM_GDAEX_PROVIDER_H__
+#define __ZAK_FORM_GDAEX_PROVIDER_H__
 
 
-#include <libzakformgdaex/form.h>
+#include <glib-object.h>
+
+#include <libgdaex/gdaex.h>
 
 
-#endif /* __LIBZAKFORMGDAEX_H__ */
+G_BEGIN_DECLS
+
+
+#define ZAK_FORM_GDAEX_TYPE_PROVIDER zak_form_gdaex_provider_get_type ()
+G_DECLARE_FINAL_TYPE (ZakFormGdaexProvider, zak_form_gdaex_provider, ZAK_FORM_GDAEX, PROVIDER, GObject)
+
+struct _ZakFormGdaexProviderClass
+{
+	GObjectClass parent_class;
+};
+
+
+ZakFormGdaexProvider *zak_form_gdaex_provider_new (void);
+
+
+G_END_DECLS
+
+
+#endif /* __ZAK_FORM_GDAEX_PROVIDER_H__ */

@@ -6,10 +6,13 @@ AM_CPPFLAGS = $(ZAKFORMGDAEX_CFLAGS) \
 
 lib_LTLIBRARIES = libzakformgdaex.la
 
-libzakformgdaex_la_SOURCES =
+libzakformgdaex_la_SOURCES = \
+                             form.c
 
 libzakformgdaex_la_LDFLAGS = -no-undefined
 
-libzakformgdaex_include_HEADERS =
+libzakformgdaex_include_HEADERS = \
+                                  libzakformgdaex.h \
+                                  form.h
 
 libzakformgdaex_includedir = $(includedir)/libzakformgdaex
