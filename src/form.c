@@ -55,7 +55,8 @@ struct _ZakFormGdaexProvider
 typedef struct _ZakFormGdaexProviderPrivate ZakFormGdaexProviderPrivate;
 struct _ZakFormGdaexProviderPrivate
 	{
-		gpointer nothing;
+		GdaEx *gdaex;
+		gchar *table;
 	};
 
 G_DEFINE_TYPE_WITH_CODE (ZakFormGdaexProvider, zak_form_gdaex_provider, G_TYPE_OBJECT,
@@ -79,6 +80,9 @@ static void
 zak_form_gdaex_provider_init (ZakFormGdaexProvider *zak_form_gdaex_provider)
 {
 	ZakFormGdaexProviderPrivate *priv = ZAK_FORM_GDAEX_PROVIDER_GET_PRIVATE (zak_form_gdaex_provider);
+
+	priv->gdaex = NULL;
+	priv->table = NULL;
 }
 
 static void
@@ -92,11 +96,13 @@ zak_form_iprovider_interface_init (ZakFormIProviderInterface *iface)
 
 /**
  * zak_form_gdaex_provider_new:
+ * @gdaex:
+ * @table:
  *
  * Returns: the newly created #ZakFormGdaexProvider object.
  */
 ZakFormGdaexProvider
-*zak_form_gdaex_provider_new ()
+*zak_form_gdaex_provider_new (GdaEx *gdaex, const gchar *table)
 {
 	ZakFormGdaexProvider *zak_form_gdaex_provider;
 	ZakFormGdaexProviderPrivate *priv;
@@ -104,6 +110,9 @@ ZakFormGdaexProvider
 	zak_form_gdaex_provider = ZAK_FORM_GDAEX_PROVIDER (g_object_new (zak_form_gdaex_provider_get_type (), NULL));
 
 	priv = ZAK_FORM_GDAEX_PROVIDER_GET_PRIVATE (zak_form_gdaex_provider);
+
+	priv->gdaex = gdaex;
+	priv->table = g_strdup (table);
 
 	return zak_form_gdaex_provider;
 }
@@ -168,7 +177,36 @@ zak_form_gdaex_provider_finalize (GObject *gobject)
 static gboolean
 zak_form_gdaex_provider_load (ZakFormIProvider *provider, GPtrArray *elements)
 {
+	gboolean ret;
 
+	guint i;
+
+	GdaExSqlBuilder *sqlb;
+
+	ZakFormGdaexProviderPrivate *priv = ZAK_FORM_GDAEX_PROVIDER_GET_PRIVATE (provider);
+
+	g_return_val_if_fail (IS_GDAEX (priv->gdaex), FALSE);
+
+	sqlb = gdaex_sql_builder_new (GDA_SQL_STATEMENT_SELECT);
+
+	gdaex_sql_builder_from (sqlb, priv->table, NULL);
+
+	/* first round to make sql statement */
+	for (i = 0; i < elements->len; i++)
+		{
+			ZakFormElement *element = (ZakFormElement *)g_ptr_array_index (elements, i);
+			if (zak_form_element_get_to_load (element))
+				{
+
+				}
+
+			if (zak_form_element_get_is_key (element))
+				{
+
+				}
+		}
+
+	return ret;
 }
 
 static gboolean

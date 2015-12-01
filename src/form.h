@@ -22,7 +22,7 @@
 
 #include <glib-object.h>
 
-#include <libgdaex/gdaex.h>
+#include <libgdaex/libgdaex.h>
 
 
 G_BEGIN_DECLS
@@ -37,7 +37,7 @@ struct _ZakFormGdaexProviderClass
 };
 
 
-ZakFormGdaexProvider *zak_form_gdaex_provider_new (void);
+ZakFormGdaexProvider *zak_form_gdaex_provider_new (GdaEx *gdaex, const gchar *table);
 
 
 G_END_DECLS
