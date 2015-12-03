@@ -280,7 +280,44 @@ zak_form_gdaex_provider_load (ZakFormIProvider *provider, GPtrArray *elements)
 static gboolean
 zak_form_gdaex_provider_insert (ZakFormIProvider *provider, GPtrArray *elements)
 {
+	gboolean ret;
 
+	guint i;
+
+	GdaExSqlBuilder *sqlb;
+
+	GdaDataModel *dm;
+
+	ZakFormGdaexProviderPrivate *priv = ZAK_FORM_GDAEX_PROVIDER_GET_PRIVATE (provider);
+
+	g_return_val_if_fail (IS_GDAEX (priv->gdaex), FALSE);
+
+	ret = TRUE;
+
+	sqlb = gdaex_sql_builder_new (GDA_SQL_STATEMENT_INSERT);
+
+	gdaex_sql_builder_from (sqlb, priv->table, NULL);
+
+	for (i = 0; i < elements->len; i++)
+		{
+			ZakFormElement *element = (ZakFormElement *)g_ptr_array_index (elements, i);
+			if (zak_form_element_get_to_save (element))
+				{
+					gdaex_sql_builder_field (sqlb,
+											 priv->table,
+											 zak_form_element_get_name (element),
+											 "",
+											 zak_form_gdaex_provider_new_gvalue_from_str_type (zak_form_element_get_provider_type (element), zak_form_element_get_value (element)));
+				}
+		}
+
+
+	if (gdaex_sql_builder_execute (sqlb, priv->gdaex, NULL) <= 0)
+		{
+			ret = FALSE;
+		}
+
+	return ret;
 }
 
 static gboolean
