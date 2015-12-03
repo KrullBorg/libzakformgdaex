@@ -174,6 +174,36 @@ zak_form_gdaex_provider_finalize (GObject *gobject)
 	parent_class->finalize (gobject);
 }
 
+static GValue
+*zak_form_gdaex_provider_new_gvalue_from_str_type (const gchar *type, const gchar *value)
+{
+	GValue *ret;
+
+	ret = g_new0 (GValue, 1);
+	if (g_ascii_strcasecmp (type, "integer") == 0)
+		{
+			ret = g_value_init (ret, G_TYPE_INT);
+			g_value_set_int (ret, strtol (value, NULL, 10));
+		}
+	else if (g_ascii_strcasecmp (type, "float") == 0)
+		{
+			ret = g_value_init (ret, G_TYPE_FLOAT);
+			g_value_set_float (ret, g_strtod (value, NULL));
+		}
+	else if (g_ascii_strcasecmp (type, "string") == 0)
+		{
+			ret = g_value_init (ret, G_TYPE_STRING);
+			g_value_set_string (ret, value);
+		}
+	else if (g_ascii_strcasecmp (type, "boolean") == 0)
+		{
+			ret = g_value_init (ret, G_TYPE_BOOLEAN);
+			g_value_set_boolean (ret, g_strcmp0 (value, "TRUE") == 0);
+		}
+
+	return ret;
+}
+
 static gboolean
 zak_form_gdaex_provider_load (ZakFormIProvider *provider, GPtrArray *elements)
 {
@@ -182,28 +212,65 @@ zak_form_gdaex_provider_load (ZakFormIProvider *provider, GPtrArray *elements)
 	guint i;
 
 	GdaExSqlBuilder *sqlb;
+	gboolean with_key;
+
+	GdaDataModel *dm;
 
 	ZakFormGdaexProviderPrivate *priv = ZAK_FORM_GDAEX_PROVIDER_GET_PRIVATE (provider);
 
 	g_return_val_if_fail (IS_GDAEX (priv->gdaex), FALSE);
+
+	ret = TRUE;
 
 	sqlb = gdaex_sql_builder_new (GDA_SQL_STATEMENT_SELECT);
 
 	gdaex_sql_builder_from (sqlb, priv->table, NULL);
 
 	/* first round to make sql statement */
+	with_key = FALSE;
 	for (i = 0; i < elements->len; i++)
 		{
 			ZakFormElement *element = (ZakFormElement *)g_ptr_array_index (elements, i);
 			if (zak_form_element_get_to_load (element))
 				{
+					gdaex_sql_builder_field (sqlb,
+											 priv->table,
+											 zak_form_element_get_name (element),
+											 "",
+											 NULL);
 
 				}
 
 			if (zak_form_element_get_is_key (element))
 				{
-
+					gdaex_sql_builder_where (sqlb, (with_key ? GDA_SQL_OPERATOR_TYPE_AND : 0),
+											 priv->table,
+											 zak_form_element_get_name (element),
+											 "",
+											 GDA_SQL_OPERATOR_TYPE_EQ,
+											 zak_form_gdaex_provider_new_gvalue_from_str_type (zak_form_element_get_provider_type (element), zak_form_element_get_value (element)),
+											 NULL);
+					with_key = TRUE;
 				}
+		}
+
+	dm = gdaex_sql_builder_query (sqlb, priv->gdaex, NULL);
+	if (!gdaex_data_model_is_empty (dm))
+		{
+			/* second round to fill ZakFormElements */
+			for (i = 0; i < elements->len; i++)
+				{
+					ZakFormElement *element = (ZakFormElement *)g_ptr_array_index (elements, i);
+					if (zak_form_element_get_to_load (element))
+						{
+							zak_form_element_set_value (element,
+														gdaex_data_model_get_field_value_stringify_at (dm, 0, zak_form_element_get_name (element)));
+						}
+				}
+		}
+	else
+		{
+			ret = FALSE;
 		}
 
 	return ret;
