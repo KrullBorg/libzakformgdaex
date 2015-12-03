@@ -265,6 +265,7 @@ zak_form_gdaex_provider_load (ZakFormIProvider *provider, GPtrArray *elements)
 						{
 							zak_form_element_set_value (element,
 														gdaex_data_model_get_field_value_stringify_at (dm, 0, zak_form_element_get_name (element)));
+							zak_form_element_set_as_original_value (element);
 						}
 				}
 		}
