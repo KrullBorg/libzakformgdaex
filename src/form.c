@@ -176,9 +176,17 @@ zak_form_gdaex_provider_finalize (GObject *gobject)
 }
 
 static GValue
-*zak_form_gdaex_provider_new_gvalue_from_str_type (const gchar *type, const gchar *value)
+*zak_form_gdaex_provider_new_gvalue_from_element (ZakFormElement *element)
 {
 	GValue *ret;
+
+	gchar *value;
+	gchar *type;
+	gchar *format;
+
+	value = zak_form_element_get_value (element);
+	type = zak_form_element_get_provider_type (element);
+	format = zak_form_element_get_format (element);
 
 	if (g_ascii_strcasecmp (type, "integer") == 0)
 		{
@@ -196,6 +204,74 @@ static GValue
 		{
 			ret = zak_utils_gvalue_new_boolean (g_strcmp0 (value, "TRUE") == 0);
 		}
+	else if (g_ascii_strcasecmp (type, "date") == 0)
+		{
+		    GDateTime *gdt;
+
+			gdt = zak_utils_get_gdatetime_from_string (value, format);
+			ret = zak_utils_gvalue_new_string (zak_utils_gdatetime_format (gdt, "%F"));
+
+			g_date_time_unref (gdt);
+		}
+	else if (g_ascii_strcasecmp (type, "time") == 0)
+		{
+		    GDateTime *gdt;
+
+			gdt = zak_utils_get_gdatetime_from_string (value, format);
+			ret = zak_utils_gvalue_new_string (zak_utils_gdatetime_format (gdt, "%T"));
+
+			g_date_time_unref (gdt);
+		}
+	else if (g_ascii_strcasecmp (type, "datetime") == 0)
+		{
+		    GDateTime *gdt;
+
+			gdt = zak_utils_get_gdatetime_from_string (value, format);
+			ret = zak_utils_gvalue_new_string (zak_utils_gdatetime_format (gdt, "%F %T"));
+
+			g_date_time_unref (gdt);
+		}
+
+	return ret;
+}
+
+static gchar
+*zak_form_gdaex_provider_new_element_value_from_string (ZakFormElement *element, const gchar *value)
+{
+	gchar *ret;
+
+	gchar *type;
+	gchar *format;
+
+	type = zak_form_element_get_provider_type (element);
+	format = zak_form_element_get_format (element);
+
+	if (g_ascii_strcasecmp (type, "integer") == 0)
+		{
+			ret = g_strdup (value);
+		}
+	else if (g_ascii_strcasecmp (type, "float") == 0)
+		{
+			ret = g_strdup (value);
+		}
+	else if (g_ascii_strcasecmp (type, "string") == 0)
+		{
+			ret = g_strdup (value);
+		}
+	else if (g_ascii_strcasecmp (type, "boolean") == 0)
+		{
+			ret = g_strdup (value);
+		}
+	else if (g_ascii_strcasecmp (type, "datetime") == 0)
+		{
+			GDateTime *gdt;
+
+			gdt = zak_utils_get_gdatetime_from_string (value, NULL);
+
+			ret = zak_utils_gdatetime_format (gdt, format);
+
+			g_date_time_unref (gdt);
+		}
 
 	return ret;
 }
@@ -211,6 +287,8 @@ zak_form_gdaex_provider_load (ZakFormIProvider *provider, GPtrArray *elements)
 	gboolean with_key;
 
 	GdaDataModel *dm;
+
+	GValue *value;
 
 	ZakFormGdaexProviderPrivate *priv = ZAK_FORM_GDAEX_PROVIDER_GET_PRIVATE (provider);
 
@@ -239,14 +317,18 @@ zak_form_gdaex_provider_load (ZakFormIProvider *provider, GPtrArray *elements)
 
 			if (zak_form_element_get_is_key (element))
 				{
+					value = zak_form_gdaex_provider_new_gvalue_from_element (element);
+
 					gdaex_sql_builder_where (sqlb, (with_key ? GDA_SQL_OPERATOR_TYPE_AND : 0),
 											 priv->table,
 											 zak_form_element_get_name (element),
 											 "",
 											 GDA_SQL_OPERATOR_TYPE_EQ,
-											 zak_form_gdaex_provider_new_gvalue_from_str_type (zak_form_element_get_provider_type (element), zak_form_element_get_value (element)),
+											 value,
 											 NULL);
 					with_key = TRUE;
+
+					g_value_unset (value);
 				}
 		}
 
@@ -259,9 +341,18 @@ zak_form_gdaex_provider_load (ZakFormIProvider *provider, GPtrArray *elements)
 					ZakFormElement *element = (ZakFormElement *)g_ptr_array_index (elements, i);
 					if (zak_form_element_get_to_load (element))
 						{
-							zak_form_element_set_value (element,
-														gdaex_data_model_get_field_value_stringify_at (dm, 0, zak_form_element_get_name (element)));
+							gchar *str;
+
+							str = zak_form_gdaex_provider_new_element_value_from_string (element,
+																						 gdaex_data_model_get_field_value_stringify_at (dm, 0, zak_form_element_get_name (element)));
+
+							zak_form_element_set_value (element, str);
 							zak_form_element_set_as_original_value (element);
+
+							if (str != NULL)
+								{
+									g_free (str);
+								}
 						}
 				}
 		}
@@ -288,6 +379,8 @@ zak_form_gdaex_provider_insert (ZakFormIProvider *provider, GPtrArray *elements)
 
 	GdaDataModel *dm;
 
+	GValue *value;
+
 	ZakFormGdaexProviderPrivate *priv = ZAK_FORM_GDAEX_PROVIDER_GET_PRIVATE (provider);
 
 	g_return_val_if_fail (IS_GDAEX (priv->gdaex), FALSE);
@@ -303,11 +396,15 @@ zak_form_gdaex_provider_insert (ZakFormIProvider *provider, GPtrArray *elements)
 			ZakFormElement *element = (ZakFormElement *)g_ptr_array_index (elements, i);
 			if (zak_form_element_get_to_save (element))
 				{
+					value = zak_form_gdaex_provider_new_gvalue_from_element (element);
+
 					gdaex_sql_builder_field (sqlb,
 											 priv->table,
 											 zak_form_element_get_name (element),
 											 "",
-											 zak_form_gdaex_provider_new_gvalue_from_str_type (zak_form_element_get_provider_type (element), zak_form_element_get_value (element)));
+											 value);
+
+					g_value_unset (value);
 				}
 		}
 
@@ -330,6 +427,8 @@ zak_form_gdaex_provider_update (ZakFormIProvider *provider, GPtrArray *elements)
 	GdaExSqlBuilder *sqlb;
 	gboolean with_key;
 
+	GValue *value;
+
 	ZakFormGdaexProviderPrivate *priv = ZAK_FORM_GDAEX_PROVIDER_GET_PRIVATE (provider);
 
 	g_return_val_if_fail (IS_GDAEX (priv->gdaex), FALSE);
@@ -347,24 +446,31 @@ zak_form_gdaex_provider_update (ZakFormIProvider *provider, GPtrArray *elements)
 			ZakFormElement *element = (ZakFormElement *)g_ptr_array_index (elements, i);
 			if (zak_form_element_get_to_save (element))
 				{
+					value = zak_form_gdaex_provider_new_gvalue_from_element (element);
+
 					gdaex_sql_builder_field (sqlb,
 											 priv->table,
 											 zak_form_element_get_name (element),
 											 "",
-											 zak_form_gdaex_provider_new_gvalue_from_str_type (zak_form_element_get_provider_type (element), zak_form_element_get_value (element)));
+											 value);
 
+					g_value_unset (value);
 				}
 
 			if (zak_form_element_get_is_key (element))
 				{
+					value = zak_form_gdaex_provider_new_gvalue_from_element (element);
+
 					gdaex_sql_builder_where (sqlb, (with_key ? GDA_SQL_OPERATOR_TYPE_AND : 0),
 											 priv->table,
 											 zak_form_element_get_name (element),
 											 "",
 											 GDA_SQL_OPERATOR_TYPE_EQ,
-											 zak_form_gdaex_provider_new_gvalue_from_str_type (zak_form_element_get_provider_type (element), zak_form_element_get_value (element)),
+											 value,
 											 NULL);
 					with_key = TRUE;
+
+					g_value_unset (value);
 				}
 		}
 
