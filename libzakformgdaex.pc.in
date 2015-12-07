@@ -7,6 +7,6 @@ modulesdir=@libdir@/@PACKAGE@/modules
 Name: @PACKAGE_NAME@
 Description: Class for ZakFormIProvider.
 Version: @PACKAGE_VERSION@
-Requires: libzakform libgdaex
+Requires: libzakform libgdaex libzakutils
 Libs: -L${libdir} -lzakformgdaex
 Cflags: -I${includedir}
