@@ -40,7 +40,8 @@ AM_GLIB_GNU_GETTEXT
 
 # Checks for libraries.
 PKG_CHECK_MODULES(ZAKFORMGDAEX, [libzakform
-                              	 libgdaex])
+                              	 libgdaex
+								 libzakutils])
 
 AC_SUBST(ZAKFORMGDAEX_CFLAGS)
 AC_SUBST(ZAKFORMGDAEX_LIBS)

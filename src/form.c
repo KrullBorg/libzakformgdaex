@@ -21,6 +21,7 @@
 #endif
 
 #include <libzakform/libzakform.h>
+#include <libzakutils/libzakutils.h>
 
 #include "form.h"
 
@@ -179,26 +180,21 @@ static GValue
 {
 	GValue *ret;
 
-	ret = g_new0 (GValue, 1);
 	if (g_ascii_strcasecmp (type, "integer") == 0)
 		{
-			ret = g_value_init (ret, G_TYPE_INT);
-			g_value_set_int (ret, strtol (value, NULL, 10));
+			ret = zak_utils_gvalue_new_int (strtol (value, NULL, 10));
 		}
 	else if (g_ascii_strcasecmp (type, "float") == 0)
 		{
-			ret = g_value_init (ret, G_TYPE_FLOAT);
-			g_value_set_float (ret, g_strtod (value, NULL));
+			ret = zak_utils_gvalue_new_float (g_strtod (value, NULL));
 		}
 	else if (g_ascii_strcasecmp (type, "string") == 0)
 		{
-			ret = g_value_init (ret, G_TYPE_STRING);
-			g_value_set_string (ret, value);
+			ret = zak_utils_gvalue_new_string (value);
 		}
 	else if (g_ascii_strcasecmp (type, "boolean") == 0)
 		{
-			ret = g_value_init (ret, G_TYPE_BOOLEAN);
-			g_value_set_boolean (ret, g_strcmp0 (value, "TRUE") == 0);
+			ret = zak_utils_gvalue_new_boolean (g_strcmp0 (value, "TRUE") == 0);
 		}
 
 	return ret;
@@ -273,6 +269,10 @@ zak_form_gdaex_provider_load (ZakFormIProvider *provider, GPtrArray *elements)
 		{
 			ret = FALSE;
 		}
+	if (dm != NULL)
+		{
+			g_object_unref (dm);
+		}
 
 	return ret;
 }
@@ -329,8 +329,6 @@ zak_form_gdaex_provider_update (ZakFormIProvider *provider, GPtrArray *elements)
 
 	GdaExSqlBuilder *sqlb;
 	gboolean with_key;
-
-	GdaDataModel *dm;
 
 	ZakFormGdaexProviderPrivate *priv = ZAK_FORM_GDAEX_PROVIDER_GET_PRIVATE (provider);
 
