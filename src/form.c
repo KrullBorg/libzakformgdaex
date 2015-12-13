@@ -182,7 +182,7 @@ static GValue
 
 	gchar *value;
 	gchar *type;
-	gchar *format;
+	GHashTable *format;
 
 	value = zak_form_element_get_value (element);
 	type = zak_form_element_get_provider_type (element);
@@ -208,7 +208,10 @@ static GValue
 		{
 		    GDateTime *gdt;
 
-			gdt = zak_utils_get_gdatetime_from_string (value, format);
+			gchar *datetime_format;
+
+			datetime_format = (gchar *)g_hash_table_lookup (format, "content");
+			gdt = zak_utils_get_gdatetime_from_string (value, datetime_format);
 			ret = zak_utils_gvalue_new_string (zak_utils_gdatetime_format (gdt, "%F"));
 
 			g_date_time_unref (gdt);
@@ -217,7 +220,10 @@ static GValue
 		{
 		    GDateTime *gdt;
 
-			gdt = zak_utils_get_gdatetime_from_string (value, format);
+			gchar *datetime_format;
+
+			datetime_format = (gchar *)g_hash_table_lookup (format, "content");
+			gdt = zak_utils_get_gdatetime_from_string (value, datetime_format);
 			ret = zak_utils_gvalue_new_string (zak_utils_gdatetime_format (gdt, "%T"));
 
 			g_date_time_unref (gdt);
@@ -226,7 +232,10 @@ static GValue
 		{
 		    GDateTime *gdt;
 
-			gdt = zak_utils_get_gdatetime_from_string (value, format);
+			gchar *datetime_format;
+
+			datetime_format = (gchar *)g_hash_table_lookup (format, "content");
+			gdt = zak_utils_get_gdatetime_from_string (value, datetime_format);
 			ret = zak_utils_gvalue_new_string (zak_utils_gdatetime_format (gdt, "%F %T"));
 
 			g_date_time_unref (gdt);
@@ -241,7 +250,7 @@ static gchar
 	gchar *ret;
 
 	gchar *type;
-	gchar *format;
+	GHashTable *format;
 
 	type = zak_form_element_get_provider_type (element);
 	format = zak_form_element_get_format (element);
@@ -266,9 +275,11 @@ static gchar
 		{
 			GDateTime *gdt;
 
-			gdt = zak_utils_get_gdatetime_from_string (value, NULL);
+			gchar *datetime_format;
 
-			ret = zak_utils_gdatetime_format (gdt, format);
+			datetime_format = (gchar *)g_hash_table_lookup (format, "content");
+			gdt = zak_utils_get_gdatetime_from_string (value, NULL);
+			ret = zak_utils_gdatetime_format (gdt, datetime_format);
 
 			g_date_time_unref (gdt);
 		}
