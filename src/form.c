@@ -391,7 +391,7 @@ zak_form_gdaex_provider_insert (ZakFormIProvider *provider, GPtrArray *elements)
 		}
 
 
-	if (gdaex_sql_builder_execute (sqlb, priv->gdaex, NULL) <= 0)
+	if (gdaex_sql_builder_execute (sqlb, priv->gdaex, NULL) != 1)
 		{
 			ret = FALSE;
 		}
@@ -456,7 +456,7 @@ zak_form_gdaex_provider_update (ZakFormIProvider *provider, GPtrArray *elements)
 				}
 		}
 
-	if (gdaex_sql_builder_execute (sqlb, priv->gdaex, NULL) <= 0)
+	if (gdaex_sql_builder_execute (sqlb, priv->gdaex, NULL) != 1)
 		{
 			ret = FALSE;
 		}
