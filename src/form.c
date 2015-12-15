@@ -190,11 +190,26 @@ static GValue
 
 	if (g_ascii_strcasecmp (type, "integer") == 0)
 		{
-			ret = zak_utils_gvalue_new_int (strtol (value, NULL, 10));
+			gchar *thousands_saparator;
+			gdouble unformatted;
+
+			thousands_saparator = (gchar *)g_hash_table_lookup (format, "thousands_separator");
+
+			unformatted = zak_utils_unformat_money_full (value, thousands_saparator, NULL);
+
+			ret = zak_utils_gvalue_new_int ((gint)unformatted);
 		}
 	else if (g_ascii_strcasecmp (type, "float") == 0)
 		{
-			ret = zak_utils_gvalue_new_float (g_strtod (value, NULL));
+			gchar *thousands_saparator;
+			gchar *currency_symbol;
+			gdouble unformatted;
+
+			thousands_saparator = (gchar *)g_hash_table_lookup (format, "thousands_separator");
+			currency_symbol = (gchar *)g_hash_table_lookup (format, "currency_symbol");
+
+			unformatted = zak_utils_unformat_money_full (value, thousands_saparator, currency_symbol);
+			ret = zak_utils_gvalue_new_float (unformatted);
 		}
 	else if (g_ascii_strcasecmp (type, "string") == 0)
 		{
@@ -206,7 +221,7 @@ static GValue
 		}
 	else if (g_ascii_strcasecmp (type, "date") == 0)
 		{
-		    GDateTime *gdt;
+			GDateTime *gdt;
 
 			gchar *datetime_format;
 
@@ -214,11 +229,14 @@ static GValue
 			gdt = zak_utils_get_gdatetime_from_string (value, datetime_format);
 			ret = zak_utils_gvalue_new_string (zak_utils_gdatetime_format (gdt, "%F"));
 
-			g_date_time_unref (gdt);
+			if (gdt != NULL)
+				{
+					g_date_time_unref (gdt);
+				}
 		}
 	else if (g_ascii_strcasecmp (type, "time") == 0)
 		{
-		    GDateTime *gdt;
+			GDateTime *gdt;
 
 			gchar *datetime_format;
 
@@ -226,11 +244,14 @@ static GValue
 			gdt = zak_utils_get_gdatetime_from_string (value, datetime_format);
 			ret = zak_utils_gvalue_new_string (zak_utils_gdatetime_format (gdt, "%T"));
 
-			g_date_time_unref (gdt);
+			if (gdt != NULL)
+				{
+					g_date_time_unref (gdt);
+				}
 		}
 	else if (g_ascii_strcasecmp (type, "datetime") == 0)
 		{
-		    GDateTime *gdt;
+			GDateTime *gdt;
 
 			gchar *datetime_format;
 
@@ -238,7 +259,10 @@ static GValue
 			gdt = zak_utils_get_gdatetime_from_string (value, datetime_format);
 			ret = zak_utils_gvalue_new_string (zak_utils_gdatetime_format (gdt, "%F %T"));
 
-			g_date_time_unref (gdt);
+			if (gdt != NULL)
+				{
+					g_date_time_unref (gdt);
+				}
 		}
 
 	return ret;
@@ -257,11 +281,27 @@ static gchar
 
 	if (g_ascii_strcasecmp (type, "integer") == 0)
 		{
-			ret = g_strdup (value);
+			gchar *thousands_saparator;
+			gchar *formatted;
+
+			thousands_saparator = (gchar *)g_hash_table_lookup (format, "thousands_separator");
+			formatted = zak_utils_format_money_full (g_strtod (value, NULL), 0, thousands_saparator, NULL);
+
+			ret = g_strdup (formatted);
 		}
 	else if (g_ascii_strcasecmp (type, "float") == 0)
 		{
-			ret = g_strdup (value);
+			gchar *thousands_saparator;
+			gchar *formatted;
+			gchar *decimals;
+			gchar *currency_symbol;
+
+			thousands_saparator = (gchar *)g_hash_table_lookup (format, "thousands_separator");
+			decimals = (gchar *)g_hash_table_lookup (format, "decimals");
+			currency_symbol = (gchar *)g_hash_table_lookup (format, "currency_symbol");
+			formatted = zak_utils_format_money_full (g_strtod (value, NULL), strtol (decimals, NULL, 10), thousands_saparator, currency_symbol);
+
+			ret = g_strdup (formatted);
 		}
 	else if (g_ascii_strcasecmp (type, "string") == 0)
 		{
@@ -271,7 +311,9 @@ static gchar
 		{
 			ret = g_strdup (value);
 		}
-	else if (g_ascii_strcasecmp (type, "datetime") == 0)
+	else if (g_ascii_strcasecmp (type, "date") == 0
+			 || g_ascii_strcasecmp (type, "time") == 0
+			 || g_ascii_strcasecmp (type, "datetime") == 0)
 		{
 			GDateTime *gdt;
 
@@ -281,7 +323,10 @@ static gchar
 			gdt = zak_utils_get_gdatetime_from_string (value, NULL);
 			ret = zak_utils_gdatetime_format (gdt, datetime_format);
 
-			g_date_time_unref (gdt);
+			if (gdt != NULL)
+				{
+					g_date_time_unref (gdt);
+				}
 		}
 
 	return ret;
@@ -360,10 +405,7 @@ zak_form_gdaex_provider_load (ZakFormIProvider *provider, GPtrArray *elements)
 							zak_form_element_set_value (element, str);
 							zak_form_element_set_as_original_value (element);
 
-							if (str != NULL)
-								{
-									g_free (str);
-								}
+							g_free (str);
 						}
 				}
 		}
