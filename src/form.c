@@ -268,70 +268,6 @@ static GValue
 	return ret;
 }
 
-static gchar
-*zak_form_gdaex_provider_new_element_value_from_string (ZakFormElement *element, const gchar *value)
-{
-	gchar *ret;
-
-	gchar *type;
-	GHashTable *format;
-
-	type = zak_form_element_get_provider_type (element);
-	format = zak_form_element_get_format (element);
-
-	if (g_ascii_strcasecmp (type, "integer") == 0)
-		{
-			gchar *thousands_saparator;
-			gchar *formatted;
-
-			thousands_saparator = (gchar *)g_hash_table_lookup (format, "thousands_separator");
-			formatted = zak_utils_format_money_full (g_strtod (value, NULL), 0, thousands_saparator, NULL);
-
-			ret = g_strdup (formatted);
-		}
-	else if (g_ascii_strcasecmp (type, "float") == 0)
-		{
-			gchar *thousands_saparator;
-			gchar *formatted;
-			gchar *decimals;
-			gchar *currency_symbol;
-
-			thousands_saparator = (gchar *)g_hash_table_lookup (format, "thousands_separator");
-			decimals = (gchar *)g_hash_table_lookup (format, "decimals");
-			currency_symbol = (gchar *)g_hash_table_lookup (format, "currency_symbol");
-			formatted = zak_utils_format_money_full (g_strtod (value, NULL), strtol (decimals, NULL, 10), thousands_saparator, currency_symbol);
-
-			ret = g_strdup (formatted);
-		}
-	else if (g_ascii_strcasecmp (type, "string") == 0)
-		{
-			ret = g_strdup (value);
-		}
-	else if (g_ascii_strcasecmp (type, "boolean") == 0)
-		{
-			ret = g_strdup (value);
-		}
-	else if (g_ascii_strcasecmp (type, "date") == 0
-			 || g_ascii_strcasecmp (type, "time") == 0
-			 || g_ascii_strcasecmp (type, "datetime") == 0)
-		{
-			GDateTime *gdt;
-
-			gchar *datetime_format;
-
-			datetime_format = (gchar *)g_hash_table_lookup (format, "content");
-			gdt = zak_utils_get_gdatetime_from_string (value, NULL);
-			ret = zak_utils_gdatetime_format (gdt, datetime_format);
-
-			if (gdt != NULL)
-				{
-					g_date_time_unref (gdt);
-				}
-		}
-
-	return ret;
-}
-
 static gboolean
 zak_form_gdaex_provider_load (ZakFormIProvider *provider, GPtrArray *elements)
 {
@@ -397,15 +333,8 @@ zak_form_gdaex_provider_load (ZakFormIProvider *provider, GPtrArray *elements)
 					ZakFormElement *element = (ZakFormElement *)g_ptr_array_index (elements, i);
 					if (zak_form_element_get_to_load (element))
 						{
-							gchar *str;
-
-							str = zak_form_gdaex_provider_new_element_value_from_string (element,
-																						 gdaex_data_model_get_field_value_stringify_at (dm, 0, zak_form_element_get_name (element)));
-
-							zak_form_element_set_value (element, str);
+							zak_form_element_set_value (element, gdaex_data_model_get_field_value_stringify_at (dm, 0, zak_form_element_get_name (element)));
 							zak_form_element_set_as_original_value (element);
-
-							g_free (str);
 						}
 				}
 		}
