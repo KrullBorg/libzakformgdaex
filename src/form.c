@@ -227,7 +227,15 @@ static GValue
 
 			datetime_format = (gchar *)g_hash_table_lookup (format, "content");
 			gdt = zak_utils_get_gdatetime_from_string (value, datetime_format);
-			ret = zak_utils_gvalue_new_string (zak_utils_gdatetime_format (gdt, "%F"));
+
+			if (gdt == NULL)
+				{
+					ret = gda_value_new_null ();
+				}
+			else
+				{
+					ret = zak_utils_gvalue_new_string (zak_utils_gdatetime_format (gdt, "%F"));
+				}
 
 			if (gdt != NULL)
 				{
@@ -242,7 +250,15 @@ static GValue
 
 			datetime_format = (gchar *)g_hash_table_lookup (format, "content");
 			gdt = zak_utils_get_gdatetime_from_string (value, datetime_format);
-			ret = zak_utils_gvalue_new_string (zak_utils_gdatetime_format (gdt, "%T"));
+
+			if (gdt == NULL)
+				{
+					ret = gda_value_new_null ();
+				}
+			else
+				{
+					ret = zak_utils_gvalue_new_string (zak_utils_gdatetime_format (gdt, "%T"));
+				}
 
 			if (gdt != NULL)
 				{
@@ -257,7 +273,15 @@ static GValue
 
 			datetime_format = (gchar *)g_hash_table_lookup (format, "content");
 			gdt = zak_utils_get_gdatetime_from_string (value, datetime_format);
-			ret = zak_utils_gvalue_new_string (zak_utils_gdatetime_format (gdt, "%F %T"));
+
+			if (gdt == NULL)
+				{
+					ret = gda_value_new_null ();
+				}
+			else
+				{
+					ret = zak_utils_gvalue_new_string (zak_utils_gdatetime_format (gdt, "%F %T"));
+				}
 
 			if (gdt != NULL)
 				{
